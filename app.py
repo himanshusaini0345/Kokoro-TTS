@@ -1,4 +1,3 @@
-import spaces
 from kokoro import KModel, KPipeline
 import gradio as gr
 import os
@@ -18,7 +17,6 @@ pipelines = {lang_code: KPipeline(lang_code=lang_code, model=False) for lang_cod
 pipelines['a'].g2p.lexicon.golds['kokoro'] = 'kˈOkəɹO'
 pipelines['b'].g2p.lexicon.golds['kokoro'] = 'kˈQkəɹQ'
 
-@spaces.GPU(duration=30)
 def forward_gpu(ps, ref_s, speed):
     return models[True](ps, ref_s, speed)
 
@@ -161,9 +159,7 @@ with gr.Blocks() as stream_tab:
         gr.DuplicateButton()
 
 BANNER_TEXT = '''
-[***Kokoro*** **is an open-weight TTS model with 82 million parameters.**](https://huggingface.co/hexgrad/Kokoro-82M)
-
-This demo only showcases English, but you can directly use the model to access other languages.
+***Kokoro***
 '''
 API_OPEN = os.getenv('SPACE_ID') != 'hexgrad/Kokoro-TTS'
 API_NAME = None if API_OPEN else False
@@ -179,19 +175,11 @@ with gr.Blocks() as app:
                     [('ZeroGPU 🚀', True), ('CPU 🐌', False)],
                     value=CUDA_AVAILABLE,
                     label='Hardware',
-                    info='GPU is usually faster, but has a usage quota',
                     interactive=CUDA_AVAILABLE
                 )
             speed = gr.Slider(minimum=0.5, maximum=2, value=1, step=0.1, label='Speed')
-            random_btn = gr.Button('🎲 Random Quote 💬', variant='secondary')
-            with gr.Row():
-                gatsby_btn = gr.Button('🥂 Gatsby 📕', variant='secondary')
-                frankenstein_btn = gr.Button('💀 Frankenstein 📗', variant='secondary')
         with gr.Column():
             gr.TabbedInterface([generate_tab, stream_tab], ['Generate', 'Stream'])
-    random_btn.click(fn=get_random_quote, inputs=[], outputs=[text], api_name=API_NAME)
-    gatsby_btn.click(fn=get_gatsby, inputs=[], outputs=[text], api_name=API_NAME)
-    frankenstein_btn.click(fn=get_frankenstein, inputs=[], outputs=[text], api_name=API_NAME)
     generate_btn.click(fn=generate_first, inputs=[text, voice, speed, use_gpu], outputs=[out_audio, out_ps], api_name=API_NAME)
     tokenize_btn.click(fn=tokenize_first, inputs=[text, voice], outputs=[out_ps], api_name=API_NAME)
     stream_event = stream_btn.click(fn=generate_all, inputs=[text, voice, speed, use_gpu], outputs=[out_stream], api_name=API_NAME)
@@ -199,4 +187,4 @@ with gr.Blocks() as app:
     predict_btn.click(fn=predict, inputs=[text, voice, speed], outputs=[out_audio], api_name=API_NAME)
 
 if __name__ == '__main__':
-    app.queue(api_open=API_OPEN).launch(show_api=API_OPEN, ssr_mode=True)
+    app.launch(share=True)
